@@ -1,9 +1,12 @@
+from pathlib import Path
+
 from pymongo import MongoClient
 from flask import Flask
 from flask_cors import CORS
 import redis
 
-TOKEN = "1170817945:AAGudU9KBHMZENj7v7e2sK6qURzRJDhXmf8"
+
+TOKEN = "1170817945:AAHrj2ZGVo9V9lQynQdG4p_-8AVuFiLFwB4"
 
 ADMINS = ["598522198", ]
 
@@ -30,3 +33,8 @@ cors = CORS(app, resources={r"/service/*": {"origins": domain}, r"/api/*": {"ori
 delay = 2.5 #10
 
 r = redis.from_url('redis://127.0.0.1:6379', decode_responses=True)
+
+I18N_DOMAIN = "taxi_bot"
+BASE_DIR = Path(__file__).parent
+LOCALES_DIR = BASE_DIR / 'locales'
+

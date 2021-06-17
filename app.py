@@ -1,9 +1,12 @@
+from aiogram.contrib.middlewares import i18n
+
+
 async def on_startup(dp):
     import filters
     import middlewares
     filters.setup(dp)
     middlewares.setup(dp)
-
+    _ = i18n.gettext
     from utils.notify_admins import on_startup_notify
     await on_startup_notify(dp)
 

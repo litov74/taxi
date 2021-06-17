@@ -3,8 +3,6 @@ import sys
 import logging
 from config import PREFIX, users, API_TOKEN
 
-logging.basicConfig(stream=sys.stdout, level=logging.DEBUG, format='%(asctime)s %(message)s')
-
 
 def get_cache_id(message):
     return f'{PREFIX}_{message.from_user.id}'
