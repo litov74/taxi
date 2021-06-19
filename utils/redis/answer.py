@@ -17,30 +17,30 @@ def answer(data):
     def drive_create(fst, snd):
         offset = timedelta(hours=3)
         offset = timezone(offset)
-        t = (datetime.now(offset)).strftime('%Y-%m-%d %X+01:00')
+        _time = (datetime.now(offset)).strftime('%Y-%m-%d %X+01:00')
 
-        print(t)
-        d = {'b_start_address': fst,
+        print(_time)
+        _data = {'b_start_address': fst,
              'b_destination_address': snd,
-             'b_start_datetime': str(t),
+             'b_start_datetime': str(_time),
              'b_car_class': '1',
              'b_payment_way': '1',
              'b_max_waiting': 3600}
 
-        req = taxi.createdrive({'data': json.dumps(d)})
+        _request = taxi.createdrive({'data': json.dumps(_data)})
 
-        ans = {'answer': 'Поездка создана'}
-        a = process_answer(req, ans)
+        _answer = {'answer': 'Поездка создана!\n'}
+        full_answer = process_answer(_request, _answer)
 
-        if a == ans:
+        if full_answer == _answer:
             step['step'] = 3
             r.hmset(step_id, step)
-            bid = str(req['data']['b_id'])
-            ans['answer'] += f' Идентификатор поездки {bid}'
-            a = create_event(a, bid, cache_id, 3, 0, prefix)
-            r.hmset(step_id, {'step': 3, 'event': a['subscribe']})
+            bid = str(_request['data']['b_id'])
+            _answer['answer'] += f'Идентификатор поездки {bid}'
+            full_answer = create_event(full_answer, bid, cache_id, 3, 0, prefix)
+            r.hmset(step_id, {'step': 3, 'event': full_answer['subscribe']})
 
-        return a
+        return full_answer
 
     cache_id = str(data['cache_id'])
     prefix = cache_id.split('_')[0]
@@ -142,22 +142,22 @@ def answer(data):
             bid = i.split()[1]
         except IndexError:
             return {'answer': 'Не указан идентификатор поездки'}
-        d = Drive(auth, bid)
+        _drive = Drive(auth, bid)
 
         if 'взять' in i:
             u_id = driver.my_id()
             carId = driver.getCarId(u_id)
             data = {'c_id': carId, 'c_payment_way': '1'}
-            resp = d.rule('set_performer', {'u_id': u_id, 'performer': '1', 'data': json.dumps(data)})
+            resp = _drive.rule('set_performer', {'u_id': u_id, 'performer': '1', 'data': json.dumps(data)})
             return process_answer(resp, {'answer': 'Поездка получена'})
         elif 'прибыл' in i:
-            resp = d.rule('set_arrive_state')
+            resp = _drive.rule('set_arrive_state')
             return process_answer(resp, {'answer': 'Установлен статус "прибыл на место"'})
         elif 'начал' in i:
-            resp = d.rule('set_start_state')
+            resp = _drive.rule('set_start_state')
             return process_answer(resp, {'answer': 'Поездка начата'})
         elif 'конец' in i:
-            resp = d.rule('set_complete_state')
+            resp = _drive.rule('set_complete_state')
             ans = {'answer': 'Поездка завершена. Поставьте оценку'}
             resp = process_answer(resp, ans)
             if resp == ans:
@@ -166,7 +166,7 @@ def answer(data):
         elif i == 'справка':
             return {'answer': 'Справки нет, но вы держитесь )'}
         elif 'отмена' in i:
-            resp = d.rule('set_cancel_state')
+            resp = _drive.rule('set_cancel_state')
             return process_answer(resp, {'answer': 'Поездка отменена'})
         else:
             return {'answer': 'Для получения справки напишите "справка"'}
