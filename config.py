@@ -37,4 +37,3 @@ r = redis.from_url('redis://127.0.0.1:6379', decode_responses=True)
 I18N_DOMAIN = "taxi_bot"
 BASE_DIR = Path(__file__).parent
 LOCALES_DIR = BASE_DIR / 'locales'
-
