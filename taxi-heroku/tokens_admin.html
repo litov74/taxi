@@ -1,0 +1,159 @@
+﻿<!DOCTYPE html>
+
+<html lang="ru" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <meta name="robots" content="noindex" />
+    <title>Токены</title>
+    <style>
+        html, body {
+            padding: 0;
+            margin: 0;
+        }
+
+        body {
+            font-family: Roboto, "Open Sans", sans-serif;
+            padding: 1% 10%;
+        }
+
+        table {
+            margin: 2% 0;
+            width: 90%;
+            border-collapse: collapse;
+        }
+
+        td, th {
+            border: 1px solid grey;
+            padding: 2px 10px;
+        }
+
+        #message {
+            margin-top: 10px;
+        }
+
+        #ref_s {
+            float: right;
+        }
+    </style>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+</head>
+<body>
+    <center>
+        <table>
+            <tbody>
+                <tr>
+                    <th>prefix</th>
+                    <th>token</th>
+                    <th>время выпуска</th>
+                    <th>IP выпуска</th>
+                </tr>
+                % for item in tokens:
+                <tr>
+                    <td>{{item['prefix']}}</td>
+                    <td>{{item['token']}}</td>
+                    <td>{{item['t']}}</td>
+                    <td>{{item['ip']}}</td>
+                </tr>
+                % end
+            </tbody>
+        </table>
+    </center>
+    <from action="" onsubmit="return false;">
+        <input type="hidden" id="service_token" value="{{service_token}}" />
+        <input type="text" autocomplete="off" placeholder="prefix" id="prefix" />
+        <button type="submit" id="gen">Создать токен</button>
+        <button type="submit" id="rev">Отозвать токен</button>
+        <button type="submit" id="ref">Перевыпустить токен</button>
+        <button type="submit" id="ref_s">Перевыпустить сервисный токен</button>
+    </from>
+    <div id="message"></div>
+    <script type="text/javascript">
+        var service_token = $('#service_token').val()
+        $('#gen').click(async function () {
+            let prefix = $('#prefix').val()
+
+            let r = await fetch('/service/generate_token', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 'prefix': prefix, 'service_token': service_token })
+            })
+
+            r = await r.json()
+            if ('error' in r) {
+                $('#message').text(r['error'])
+            } else {
+                $('#message').text(r['token'])
+            }
+        })
+
+        $('#rev').click(async function () {
+            let prefix = $('#prefix').val()
+
+            let r = await fetch('/service/revoke_token', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 'prefix': prefix, 'service_token': service_token })
+            })
+
+            r = await r.json()
+            if ('error' in r) {
+                $('#message').text(r['error'])
+            } else {
+                $('#message').text(r['revoked'])
+            }
+        })
+
+        $('#ref').click(async function () {
+            let prefix = $('#prefix').val()
+
+            let r = await fetch('/service/refresh_token', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 'prefix': prefix, 'service_token': service_token })
+            })
+
+            r = await r.json()
+            if ('error' in r) {
+                $('#message').text(r['error'])
+            } else {
+                $('#message').text(r['token'])
+            }
+        })
+
+        var conf = false
+
+        $('#ref_s').click(async function () {
+            let btn = $('#ref_s')
+            if (conf === false) {
+                btn.text('Нажмите ещё раз')
+                conf = true
+            } else {
+                let r = await fetch('/service/refresh_service_token', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 'service_token': service_token })
+                })
+
+                r = await r.json()
+                if ('error' in r) {
+                    $('#message').text(r['error'])
+                } else {
+                    $('#message').text(r['token'])
+                }
+
+                btn.text('Перевыпустить сервисный токен')
+                conf = false
+            }
+        })
+    </script>
+</body>
+</html>

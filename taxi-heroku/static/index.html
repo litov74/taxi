@@ -1,0 +1,201 @@
+﻿<!DOCTYPE html>
+
+<html lang="ru" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <meta name="robots" content="noindex" />
+    <title>Такси</title>
+    <style>
+        body {
+            padding: 10%;
+            font-family: Roboto, sans-serif;
+        }
+
+        #chat {
+            border: 2px solid black;
+            height: 50vh;
+            margin-bottom: 25px;
+            padding: 10px;
+            overflow-y: scroll;
+        }
+
+        #write {
+            display: inline-flex;
+            width: 100%;
+        }
+
+        #inp {
+            width: 100%;
+            margin-right: 10px;
+        }
+
+        .repl {
+            width: 100%;
+            display: flex;
+        }
+
+        .ans {
+            justify-content: flex-end;
+        }
+
+        .event {
+            justify-content: center;
+        }
+
+        .top_form {
+            margin-bottom: 25px;
+            margin-right: 10px;
+            border: 1px solid black;
+            display: inline-flex;
+            padding: 10px;
+        }
+
+            .top_form > input {
+                margin-right: 10px;
+            }
+
+        .err {
+            font-weight: bold;
+        }
+    </style>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+</head>
+<body>
+    <form class="top_form" id="user" action="" onsubmit="return false;">
+        <input type="text" autocomplete="off" id="cache_id" placeholder="cache_id" />
+        <input type="text" autocomplete="off" id="token" placeholder="token"/> 
+    </form>
+    <form class="top_form" id="set_mark" action="" onsubmit="return false;">
+        <input type="text" autocomplete="off" id="mark" placeholder="Оценка" />
+        <input type="hidden" id="mark_url" />
+        <button type="submit" id="mark_button" disabled>Отправить</button>
+    </form>
+    <div id="chat"></div>
+    <form id="write" action="" onsubmit="return false;">
+        <input id="inp" type="text" autocomplete="off" />
+        <button type="submit">Отправить</button>
+    </form>
+    <script>
+        var inp = $('#inp')
+        var chat = $('#chat')
+        var is_subscribed = false
+
+        function update_chat(repl, type) {
+            let div = document.createElement("div")
+
+            div.innerHTML = repl
+            div.className = 'repl' + ' ' + type
+            chat.append(div)
+            inp.val('')
+        }
+
+        $('#write').on('submit', async function () {
+            var text = inp.val()
+            var cache_id = $('#cache_id').val()
+            var token = $('#token').val()
+
+            update_chat(text, '')
+
+            let r = await fetch('/api/in', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 'input': text, 'cache_id': cache_id, 'token': token })
+            })
+
+            const j = await r.json()
+
+            if ('answer' in j) {
+                update_chat(j['answer'], 'ans')
+            } else if ('error' in j) {
+                update_chat(j['error'], 'ans err')
+            }
+
+            async function subscribe(url, sub) {
+                let r = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({'token': token})
+                })
+                let t = await r.json()
+                console.log(t)
+
+                if ('error' in t) {
+                    update_chat(j['error'], 'event err')
+                }
+
+                if (t['status'] === 'comlete') {
+                    console.log('comlete')
+                    console.log('sub ' + sub)
+                    update_chat(t['message'], 'event')
+                    is_subscribed = false
+                    clearInterval(sub)
+                } else if (t['status'] === 'expired' || t['status'] === 'not_found' || t['status'] === 'not_authorized') {
+                    console.log('expired || not_found || not_authorized')
+                    is_subscribed = false
+                    clearInterval(sub)
+                }
+                if ('subscribe' in t) {
+                    is_subscribed = true
+                    let n_url = t['subscribe']
+                    console.log('n_url ' + n_url)
+                    var sub = setInterval(() => subscribe(n_url, sub), t['delay'] * 1000)
+                    t = {}
+                }
+
+                if ('action' in t) {
+                    if (t['action'] === 'set_mark') {
+                        $('#mark_button').removeAttr('disabled')
+                        $('#mark_url').val(t['action_url'])
+                    }
+                }
+            }
+
+            if ('subscribe' in j) {
+                is_subscribed = true
+                var sub = setInterval(() => subscribe(j['subscribe'], sub), j['delay'] * 1000)
+            }
+
+            if ('act_event' in j && is_subscribed === false) {
+                is_subscribed = true
+                var sub = setInterval(() => subscribe(j['act_event'], sub), j['delay'] * 1000)
+            }
+
+            if ('action' in j) {
+                if (j['action'] === 'set_mark') {
+                    $('#mark_button').removeAttr('disabled')
+                    $('#mark_url').val(j['action_url'])
+                }
+            }
+        })
+
+        $('#set_mark').on('submit', async function () {
+            let url = $('#mark_url').val()
+            let value = $('#mark').val()
+            var token = $('#token').val()
+            let r = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({'value': value, 'token': token})
+            })
+            let j = await r.json()
+
+            if ('answer' in j) {
+                update_chat(j['answer'], 'ans')
+            } else if ('error' in j) {
+                update_chat(j['error'], 'ans err')
+            }
+
+            if ('final' in j) {
+                $('#mark_button').attr('disabled', '')
+            }
+        })
+    </script>
+</body>
+</html>

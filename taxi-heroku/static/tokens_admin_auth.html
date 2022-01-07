@@ -1,0 +1,65 @@
+﻿<!DOCTYPE html>
+
+<html lang="ru" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <meta name="robots" content="noindex" />
+    <title>Авторизация</title>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://www.google.com/recaptcha/api.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+    <style>
+        html, body {
+            padding: 0;
+            margin: 0;
+        }
+
+        body {
+            font-family: Roboto, "Open Sans", sans-serif;
+            padding: 10%;
+        }
+
+        #error_box {
+            margin-top: 10px;
+        }
+
+        #service_token {
+            width: 90%
+        }
+
+        button {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <center>
+        <form action="" onsubmit="return false;" id="form">
+            <input type="text" autocomplete="off" placeholder="service_token" id="service_token" />
+            <button type="submit" class="g-recaptcha" data-sitekey="6LekRaoZAAAAABf92x3FnJnycOIHKDE5WG8M_3Wo" data-callback='onSubmit' data-action='submit'>Отправить</button>
+        </form>
+        <div id="error_box"></div>
+    </center>
+    <script type="text/javascript">
+        async function onSubmit (token) {
+            let service_token = $('#service_token').val()
+
+            let r = await fetch('/service/token_admin_auth', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 'service_token': service_token, 'g-recaptcha-response': token })
+            })
+
+            r = await r.json()
+
+            if ('error' in r) {
+                $('#error_box').text(r['error'])
+            } else if ('authorized' in r) {
+                location.reload(true)
+            }
+        }
+    </script>
+</body>
+</html>

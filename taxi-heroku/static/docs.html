@@ -1,0 +1,198 @@
+﻿<!DOCTYPE html>
+
+<html lang="ru" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <meta name="robots" content="noindex" />
+    <title>Документация</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+    <style type="text/css">
+        html, body {
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Roboto, "Open Sans", sans-serif;
+            padding: 1% 10%;
+        }
+
+        code {
+            background-color: rgba(240,248,255, 0.8);
+            padding: 2px;
+            border: 0.1em solid rgb(114,160,193);
+            border-radius: 0.2em;
+        }
+
+        div {
+            margin: 25px 0;
+        }
+
+        .right {
+            float: right;
+        }
+
+        .method_desc {
+            padding: 0 2%;
+        }
+
+        table {
+            margin: 2% 0;
+            width: 90%;
+            border-collapse: collapse;
+        }
+        td, th {
+            border: 1px solid grey;
+            padding: 2px 10px;
+        }
+    </style>
+</head>
+<body>
+    <div>
+        <h2>Общая информация</h2>
+        <p>Эндпоинт – https://tb.e-aristotel.com/api/<метод></p>
+        <p>Формат общения – JSON. Обязательно указание заголовка <code>Content-Type: application/json</code> (иначе просто не будет работать)</p>
+        <p>Все методы вызываются POST запросом. Во всех методах обязательна передача аргумента token</p>
+        <p>Уникальным идентификатором пользователя является <code>cache_id</code> – он формируется по принципу “{prefix}_{id}”, <code>prefix</code> уникален для каждого токена.</p>
+        <p><code>cache_id</code> может быть использован только тогда, когда передан токен от соответствующего префикса</p>
+        <h3>Политики CORS</h3>
+        <div>
+            Access-Control-Allow-Origin: * <br />
+            Access-Control-Allow-Methods: GET, POST, OPTIONS <br />
+            Access-Control-Allow-Headers: Origin, Accept, Content-Type <br />
+        </div>
+    </div>
+    <div>
+        <h2>Описание методов API</h2>
+        <p><b>/api/in</b> – принимает ввод пользователя и возвращает ответ</p>
+        <div class="method_desc">
+            <p>
+                <h4>Аргументы</h4>
+                <code>cache_id</code> – уникальный идентификатор пользователя <span class="right">(обязательный)</span> <br />
+                <code>input</code> – фраза которую ввёл пользователь <span class="right">(обязательный)</span> <br />
+            </p>
+            <p>
+                <h4>В случае успешного выполнения возвращает</h4>
+                <code>аnswer</code> – ответ <br />
+            </p>
+            <p>
+                <h4>Может вернуть событие</h4>
+                <code>subscribe</code> – url который необходимо опрашивать <br />
+                <code>delay</code> – частота (в секундах) с которой нужно опрашивать сервер <br />
+            </p>
+            <p>
+                <h4>Может вернуть актуальное событие</h4>
+                <code>act_event</code> – url который необходимо опрашивать в случае если на данный момент не опрашивается ни одного другого события<br />
+                <code>delay</code> – частота (в секундах) с которой нужно опрашивать сервер <br />
+            </p>
+            <p>
+                <h4>Может вернуть действие</h4>
+                <code>action</code> – тип действия <br />
+                <code>action_url</code> – url на который необходимо передать данные <br />
+            </p>
+            <p>Подробнее о событиях и действиях написано в соответствующих разделах</p>
+            <p>
+                <h4>В случае неудачи возвращает</h4>
+                <code>error</code> – описание ошибки
+            </p>
+        </div>
+        <p><b>/api/user_auth</b> – авторизует пользователя по логину-паролю и присваивает ему cache_id</p>
+        <div class="method_desc">
+            <p>
+                <h4>Аргументы</h4>
+                <code>cache_id</code> – уникальный идентификатор пользователя <span class="right">(обязательный)</span> <br />
+                <code>login</code> – логин <span class="right">(обязательный)</span> <br />
+                <code>password</code> – пароль <span class="right">(обязательный)</span> <br />
+            </p>
+            <p>
+                <h4>В случае успешного выполнения возвращает</h4>
+                <code>аnswer</code> – фраза «Вы успешно авторизовались» <br />
+            </p>
+            <p>
+                <h4>В случае неудачи возвращает</h4>
+                <code>error</code> – описание ошибки
+            </p>
+        </div>
+    </div>
+    <div>
+        <h2>События</h2>
+        <p>наличие в ответе элемента <code>subscribe</code> указывает на необходимость с периодичностью <code>delay</code> проводить опрос сервера по указанному url, обратите внимание, что при этом остаётся обязательной передача <code>token</code></p>
+        <h4>В случае успеха возвращает</h4>
+        <code>status</code> – статус события <br />
+        <p>таблица статусов</p>
+        <center>
+            <table>
+                <tbody>
+                    <tr>
+                        <th>статус</th>
+                        <th>описание</th>
+                        <th>событие завершено</th>
+                    </tr>
+                    <tr>
+                        <td>expired</td>
+                        <td>событие просрочено</td>
+                        <td>да</td>
+                    </tr>
+                    <tr>
+                        <td>not_found</td>
+                        <td>событие не найдено</td>
+                        <td>да</td>
+                    </tr>
+                    <tr>
+                        <td>wait</td>
+                        <td>ожидание события</td>
+                        <td>нет</td>
+                    </tr>
+                </tbody>
+            </table>
+        </center>
+        <p>в случае если событие завершено необходимо прекратить опрос сервера</p>
+        <code>message</code> – сообщение для пользователя (только если событие завершено) <br />
+        <code>delay</code> – задержка до следующего запроса (только если событие не завершено) <br />
+        <p>
+            <h4>Может вернуть событие</h4>
+            <code>subscribe</code> – url который необходимо опрашивать <br />
+            <code>delay</code> – частота (в секундах) с которой нужно опрашивать сервер <br />
+        </p>
+        <p>
+            <h4>Может вернуть действие</h4>
+            <code>action</code> – тип действия <br />
+            <code>action_url</code> – url на который необходимо передать данные <br />
+        </p>
+    </div>
+    <div>
+        <h2>Действия</h2>
+        <p>наличие в ответе элемента <code>action</code> указывает на необходимость запросить у пользователя данные в соответствии с типом действия и передать их на <code>action_url</code>, обратите внимание, что при этом остаётся обязательной передача <code>token</code></p>
+        <p>таблица типов действий</p>
+        <center>
+            <table>
+                <tbody>
+                    <tr>
+                        <th>action</th>
+                        <th>описание</th>
+                        <th>данные</th>
+                    </tr>
+                    <tr>
+                        <td>set_mark</td>
+                        <td>поставить оценку поездке</td>
+                        <td>value – оценка (от 1 до 5)</td>
+                    </tr>
+                </tbody>
+            </table>
+        </center>
+        <h4>В случае успеха возвращает</h4>
+        <code>answer</code> – ответ <br />
+        <code>final</code> – если есть, то всегда True. Указывает на завершённость действия. Если действие не завершено необходимо устранить ошибки и отправить данные заново <br />
+        <h4>В случае неудачи возвращает</h4>
+        <code>error</code> – описание ошибки <br />
+    </div>
+    <div>
+        <h2>Обновление от 26.6.20</h2>
+        <p>Метод <b>/api/in</b> больше не принимает аргумент <code>type</code>, он определяется автоматически, в случае, если аргумент передан, он будет проигнорирован</p>
+    </div>
+    <div>
+        <h2>Обновление от 5.7.20</h2>
+        <p>Метод <b>/api/in</b> теперь может вернуть информацию о актуальном событии (параметр <code>act_event</code>)</p>
+    </div>
+</body>
+</html>
